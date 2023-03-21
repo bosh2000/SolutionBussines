@@ -52,12 +52,12 @@ namespace SolutionBussines.DBRepository.Impl.ItemsRepository
                     dataCus = dataCus.OrderBy(exp);
                     dataCus = request.SortColumnDirection == "asc" ? dataCus.OrderBy(exp) : dataCus.OrderByDescending(exp);
                 }
-                
-                request.RecordsTotal = dataCus.Count();
-                dataCus = dataCus.Skip(request.Skip);
+                var dataList= dataCus.Where(x => x.Date >= request.DateStart && x.Date <= request.DateEnd).ToList();
+                request.RecordsTotal = dataList.Count();
+                dataList = dataList.Skip(request.Skip).ToList() ;
                 if (request.Length != "-1")
-                    dataCus = dataCus.Take(request.PageSize);
-                return dataCus.Where(x => x.Date >= request.DateStart && x.Date <= request.DateEnd).ToList();
+                    dataList = dataList.Take(request.PageSize).ToList();
+                return dataList;
             });
         }
 
