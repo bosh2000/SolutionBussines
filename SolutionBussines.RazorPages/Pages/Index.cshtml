@@ -1,0 +1,180 @@
+﻿@page
+@model IndexModel
+@using SolutionBussines.Models.ViewModel 
+@{
+    ViewData["Title"] = "Home page";
+}
+
+<div class="text-center">
+    <div class="row">
+        <div class="col-lg-12">
+            <div class="card">
+                <div class="card-body">
+                    <div class="dataTable-top">
+                        <div class="row m-2">
+                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#CreateOrderModal">
+                            <i class="bi bi-file-earmark-plus"></i>Добавить
+                        </button>
+                        </div>
+                        <div class="row m-2">
+                                <div class="col-4 form-floating">
+                                    <input id="DateStart" class="form-control" type="date" asp-for=@Model.DateStart/>
+                                    <label>Дата начала фильтрации</label>
+                                </div>
+
+                                <div class="col-4 form-floating">
+                                    <input id="DateEnd" class="form-control" type="date" asp-for=@Model.DateEnd/>
+                                    <label>Дата конца фильтрации</label>
+                                </div>
+                    </div>
+                    <table id="OrderTable" class="table table-hover datatable dataTable-table" width="100%" cellspacing="0">
+                        <thead>
+                            <tr>
+                                <th scope="col">id</th>
+                                <th scope="col">Дата</th>
+                                <th scope="col">Номер</th>
+                                <th scope="col">Поставщик</th>
+                                <th scope="col"></th>
+                            </tr>
+                        </thead>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</div>
+<div class="modal fade" id="CreateOrderModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Создание нового заказка</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form class="row g-3 needs-validation" validate method="post" enctype="multipart/form-data">
+                    <div class="form-floating col-md-4">
+                        <input type="text" class="form-control" name="Number" required>
+                        <label class="form-label">Номер заказа</label>
+                    </div>
+                    <div class="form-floating col-md-4">                       
+                        <select class="form-select" name="SelectedProvider" asp-for=@Model.ValOrder.SelectedProvider asp-items=@Model.ProviderList required>
+                            <option value="null" selected="selected"> ... </option>
+                        </select>
+                        <label>Поставщик</label>
+                        <span data-valmsg-for="SelectedProvider" asp-validation-for="ValOrder.SelectedProvider" class="text-danger"></span>
+                    </div>
+                    <div class="form-floating col-md-4">
+                        <input type="date" class="form-control" name="Date" aria-label="Дата" required>
+                        <label class="form-label">Дата</label>
+                    </div>
+                    <button class="btn btn-outline-success" type="submit" asp-page-handler="CreateNewOrder"><i class="bi bi-check-circle"></i><span>Добавить</span></button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+@section scripts{
+    <script src="~/lib/datatables/js/jquery.dataTables.min.js"></script>
+    <script src="~/lib/datatables/js/dataTables.bootstrap4.min.js"></script>
+
+    <script>
+
+        $(document).ready(function () {
+
+           var orderTable= $("#OrderTable").DataTable({
+                "processing": true,
+                "serverSide": true,
+                "ordering": true,
+                "filter": true,
+                "searching": true,
+                "ajax": {
+                    "url": '/Api/Order/GetOrderList',
+                    "type": "POST",
+                    "datatype": "json",
+                    "headers": { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() },
+                    "data": function(d) {
+                        d.dateStart=$('#DateStart').val();
+                        d.dateEnd=$('#DateEnd').val();
+                    }
+                },
+                "columnDefs": [{
+                    "targets": [0],
+                    "visible": false,
+                    "searchable": false
+                }],
+                "columns": [
+                    { "data": "id", "name": "id", "autoWidth": true },
+                    { "data": "dateorder", "name": "Дата", "autoWidth": true },
+                    { "data": "order_number", "name": "Номер", "autoWidth": true },
+                    { "data": "provider", "name": "Поставщик", "autoWidth": true },
+                    {
+                        "render": function (data, type, row) {
+                            return "<a href='./Detail?OrderId=" + row.id + "' class='btn btn-primary btn-sm' title='Просмотр'><i class='bi bi-card-text'></i></a>"+
+                                "<a href='./Index?handler=DeleteOrder&orderId=" + row.id + "' class='btn btn-primary btn-sm' title = 'Удалить' > <i class='bi bi-x'></i></a >"
+                                
+                        }
+                    }
+                ],
+                "language": {
+                    "decimal": "",
+                    "emptyTable": "Нет данных для отображения",
+                    "info": "Показано с _START_ по _END_ из _TOTAL_ записей",
+                    "infoEmpty": "Показано с 0 по 0 из 0 entries",
+                    "infoFiltered": "(filtered from _MAX_ total entries)",
+                    "infoPostFix": "",
+                    "thousands": ",",
+                    "lengthMenu": "Показывать по  _MENU_ записей",
+                    "loadingRecords": "Загрузка",
+                    "processing": "Загрузка списка заказов...",
+                    "search": "Поиск:",
+                    "zeroRecords": "Нет совпадений",
+                    "paginate": {
+                        "first": "Первый",
+                        "last": "Последний",
+                        "next": "Следующий",
+                        "previous": "Предыдущий"
+                    },
+                    "aria": {
+                        "sortAscending": ": activate to sort column ascending",
+                        "sortDescending": ": activate to sort column descending"
+                    }
+                }
+            });
+            $('#OrderTable').on('click','tr',function(e){
+                var data = orderTable.row(this).data();
+                window.location.href = './Detail?OrderId=' + data['id'];
+            });
+
+                var minDateFilter = "";
+                var maxDateFilter = "";
+                $('#DateStart').keyup(function(){
+                    minDateFilter=new Date(this.value).getTime();
+                    orderTable.draw();
+                    console.log('min-'+minDateFilter);
+                })
+                $('#DateEnd').keyup(function(){
+                    maxDateFilter=new Date(this.value).getTime();
+                    orderTable.draw();
+                    console.log('max-'+maxDateFilter);
+                })
+            $.fn.dataTable.ext.search.push(function (oSettings, aData, iDataIndex) {
+                console.log("Test");
+                if (typeof aData._date == 'undefined') {
+                    aData._date = new Date(aData[1]).getTime();
+                }
+                if (minDateFilter && !isNaN(minDateFilter)) {
+                    if (aData._date < minDateFilter) {
+                        return false;
+                    }
+                }
+                if (maxDateFilter && !isNaN(maxDateFilter)) {
+                    if (aData._date > maxDateFilter) {
+                        return false;
+                    }
+                }
+                return true;
+            });
+        });
+    </script>
+}
