@@ -22,3 +22,5 @@
 
  
 Для упрощения и быстроты , пропущены проверки на граничные условия и Null. Всегда считается что данные есть.
+
+Backup Базы находиться тут SolutionBussines.RazorPages/SulitionBussines.bak
